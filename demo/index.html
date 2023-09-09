@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+    <title>Flat FHIR</title>
+    <link rel="stylesheet" href="codemirror.5.62.0.min.css">
+    <script src="codemirror.5.62.0.min.js"></script>
+    <script src="javascript.5.62.0.min.js"></script>
+	<script src="codemirror.5.sql.js"></script>
+    <script src="../generated/fp-subset-parser.js"></script>
+    <script src="../src/flatview.js"></script>
+	<style>
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			background: #f7f7f7;
+			overflow: hidden; /* Disable scrolling on the body */
+		}
+		h1 {
+			margin: 0;
+			height: 50px;
+			text-align: center;
+			line-height: 50px;
+		}
+		h3 {
+			margin: 0;
+			height: 25px;
+			font-size: 20;
+			text-align: left;
+			line-height: 25px;
+		}
+		#container {
+			display: flex;
+			flex-direction: column;
+			padding: 0 20px;
+			height: calc(100vh - 50px);  /* Adjusted for the top-level heading */
+		}
+		.editor {
+			height: calc((100vh - 25px) / 2 - 50px);  /* Divide remaining space equally, adjusted for the two h1 elements */
+			overflow: hidden;
+		}
+		.CodeMirror {
+			height: 100%;
+			overflow-y: auto; /* Enable vertical scrolling */
+		}
+		/* Remove extra character */
+		.CodeMirror pre.CodeMirror-placeholder {
+			display: none;
+		}
+		/* Hide the cursor in the read-only instance */
+		#outputArea .CodeMirror-cursors {
+			display: none !important;
+		}
+	</style>
+</head>
+<body>
+	<h1>Flat FHIR</h1>
+	<div id="container">
+		<h3 id="vd-heading">View Definition</h3>
+		<div id="inputArea" class="editor"></div>
+		<h3>SQL (DuckDB)</h3>
+		<div id="outputArea" class="editor"></div>
+	</div>
+	<script>
+
+		var definitions;
+		fetch('../src/abstract_r4.json')
+			.then(response => response.json())
+			.then(data => {
+				definitions = data;
+				updateOutput();
+			})
+	
+		var inputEditor = CodeMirror(document.getElementById("inputArea"), {
+			mode:  "application/json",
+			lineNumbers: true,
+			value: '{\n  "resource": "Patient",\n  "select": [\n    {"path": "id"},\n    {"path": "name.first().family"}\n  ]\n}'
+		});
+
+		var outputEditor = CodeMirror(document.getElementById("outputArea"), {
+			mode: "text/x-sql",
+			lineNumbers: true,
+			readOnly: true,
+			value: 'loading...'
+		});
+
+		function updateOutput() {
+			let json;
+			try {
+				json = JSON.parse(inputEditor.getValue());
+				var fv = new FlatView(definitions);
+				fv.loadViewDefinition(json);
+				console.log(fv)
+				document.getElementById("vd-heading").style.color = "black";
+				outputEditor.setValue(fv.serializeForDuckDB());
+			} catch (e) {
+				document.getElementById("vd-heading").style.color = "red";
+				outputEditor.setValue("ERROR: " + e);
+			}
+		}
+
+		function debounce(func, wait) {
+			let timeout;
+			return function(...args) {
+				clearTimeout(timeout);
+				timeout = setTimeout(() => func.apply(this, args), wait);
+			};
+		}
+
+		var debouncedUpdate = debounce(updateOutput, 300);
+		inputEditor.on("change", function() {
+			if (!definitions) return;
+			debouncedUpdate();
+			
+		});
+
+	</script>
+</body>
+</html>

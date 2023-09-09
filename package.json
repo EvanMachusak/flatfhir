@@ -1,0 +1,19 @@
+{
+  "name": "flatfhir",
+  "version": "0.0.1",
+  "devDependencies": {
+    "@duckdb/duckdb-wasm": "^1.27.0",
+    "apache-arrow": "^13.0.0",
+    "duckdb": "^0.8.1",
+    "glob": "^10.3.3",
+    "jsonschema": "^1.4.1",
+    "pegjs": "^0.10.0",
+    "web-worker": "^1.2.0"
+  },
+  "scripts": {
+    "test": "cd scripts && node duck-test-runner.js",
+    "build-demo-dist": "cd scripts && node build-demo-dist.js",
+    "build-parser": "cd scripts && node build-parser.js",
+    "abstract-fhir": "cd scripts && node abstract-fhir.js"
+  }
+}
