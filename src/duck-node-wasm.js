@@ -13,8 +13,8 @@ class DuckRunner {
 
 	async openDB() {
 		const logger = new duckdb.VoidLogger();
-		// const logger = new duckdb.ConsoleLogger();
-		this.worker = new Worker(mainWorker);
+		const url =  new URL(mainWorker).pathname;
+		this.worker = new Worker(url);
 		this.db = new duckdb.AsyncDuckDB(logger, this.worker);
 		await this.db.instantiate(mainModule);
 		this.conn = await this.db.connect();

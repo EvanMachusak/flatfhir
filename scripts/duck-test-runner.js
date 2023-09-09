@@ -57,8 +57,8 @@ const testDirOrFile = process.argv.slice(2)[0] || "../tests/";
 let files = [testDirOrFile];
 if (fs.statSync(testDirOrFile).isDirectory()) {
 	files = glob.globSync(
-		path.join(testDirOrFile, "/**/test*.json"), 
-		{ignore: "node_modules/**"}
+		path.join(testDirOrFile, "/**/test*.json").replaceAll('\\', '/'), 
+		{ignore: "node_modules/**", dotRelative: true}
 	);
 }
 executeTestFiles(files);
